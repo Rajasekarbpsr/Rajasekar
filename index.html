@@ -1,0 +1,2093 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>SECE Test Portal- College Testing Platform</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    /* Mobile/Tablet Restriction */
+    .mobile-restriction {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        z-index: 9999;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .restriction-icon {
+        font-size: 80px;
+        margin-bottom: 30px;
+    }
+
+    .restriction-title {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 20px;
+    }
+
+    .restriction-message {
+        font-size: 18px;
+        line-height: 1.6;
+        max-width: 500px;
+        opacity: 0.9;
+    }
+
+    @media (max-width: 1024px) {
+        .mobile-restriction {
+            display: flex;
+        }
+        
+        .screen {
+            display: none !important;
+        }
+    }
+
+            .screen {
+                display: none;
+                min-height: 100vh;
+                animation: fadeIn 0.5s ease-in-out;
+            }
+
+            .screen.active {
+                display: block;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            /* Login Screen */
+            .login-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                padding: 20px;
+            }
+
+            .login-card {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                padding: 60px 50px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                width: 100%;
+                max-width: 450px;
+                text-align: center;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .logo {
+                font-size: 32px;
+                font-weight: 800;
+                background: linear-gradient(135deg, #2a5da3, #275c91);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 10px;
+            }
+
+            .tagline {
+                color: #666;
+                margin-bottom: 40px;
+                font-size: 16px;
+            }
+
+            .form-group {
+                margin-bottom: 25px;
+                text-align: left;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                color: #333;
+                font-weight: 600;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 15px 20px;
+                border: 2px solid #e1e5e9;
+                border-radius: 12px;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                background: #f8f9fa;
+            }
+
+            .form-group input:focus {
+                outline: none;
+                border-color: #667eea;
+                background: white;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .login-btn {
+                width: 100%;
+                padding: 15px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                font-size: 18px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 20px;
+            }
+
+            .login-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            }
+
+            /* Registration Screen Styles - Add this to your existing CSS */
+            .register-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                padding: 20px;
+            }
+
+            .register-card {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                padding: 50px 40px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                width: 100%;
+                max-width: 500px;
+                text-align: center;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .register-form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 25px;
+            }
+
+            .register-form .form-group.full-width {
+                grid-column: 1 / -1;
+            }
+
+            .form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .department-select, .year-select {
+                width: 100%;
+                padding: 15px 20px;
+                border: 2px solid #e1e5e9;
+                border-radius: 12px;
+                font-size: 16px;
+                background: #f8f9fa;
+                transition: all 0.3s ease;
+            }
+
+            .department-select:focus, .year-select:focus {
+                outline: none;
+                border-color: #667eea;
+                background: white;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .auth-switch {
+                text-align: center;
+                margin-top: 25px;
+                padding-top: 25px;
+                border-top: 1px solid #e1e5e9;
+            }
+
+            .auth-switch p {
+                color: #666;
+                margin-bottom: 10px;
+            }
+
+            .switch-link {
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .switch-link:hover {
+                color: #5a6fd8;
+                text-decoration: underline;
+            }
+
+            @media (max-width: 768px) {
+                .register-form {
+                grid-template-columns: 1fr;
+                }
+        
+                .form-row {
+                grid-template-columns: 1fr;
+                }
+            }
+
+            /* Dashboard Screen */
+            .dashboard {
+                background: #f5f7fa;
+                min-height: 100vh;
+            }
+
+            .navbar {
+                background: white;
+                padding: 20px 40px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .nav-brand {
+                font-size: 28px;
+                font-weight: 800;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .nav-user {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .user-avatar {
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 600;
+                font-size: 18px;
+            }
+
+            .logout-btn {
+                padding: 10px 20px;
+                background: #ff4757;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .logout-btn:hover {
+                background: #ff3742;
+                transform: translateY(-1px);
+            }
+
+            .dashboard-content {
+                padding: 40px;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+
+            .dashboard-header {
+                margin-bottom: 40px;
+            }
+
+            .dashboard-title {
+                font-size: 36px;
+                font-weight: 700;
+                color: #2c3e50;
+                margin-bottom: 10px;
+            }
+
+            .dashboard-subtitle {
+                color: #7f8c8d;
+                font-size: 18px;
+            }
+
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 40px;
+                margin-bottom: 40px;
+            }
+
+            .profile-section, .stats-section {
+                background: white;
+                padding: 30px;
+                border-radius: 16px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .section-title {
+                font-size: 24px;
+                font-weight: 700;
+                color: #2c3e50;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .profile-info {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .info-item {
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border-left: 4px solid #667eea;
+            }
+
+            .info-label {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 5px;
+                font-weight: 600;
+            }
+
+            .info-value {
+                font-size: 18px;
+                color: #2c3e50;
+                font-weight: 600;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+
+            .stat-card {
+                text-align: center;
+                padding: 20px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+            }
+
+            .stat-number {
+                font-size: 36px;
+                font-weight: 800;
+                margin-bottom: 8px;
+            }
+
+            .stat-label {
+                font-size: 14px;
+                opacity: 0.9;
+                font-weight: 600;
+            }
+
+            .tests-section {
+                background: white;
+                padding: 30px;
+                border-radius: 16px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #f1f2f6;
+            }
+
+            .tab {
+                padding: 15px 25px;
+                background: none;
+                border: none;
+                font-size: 16px;
+                font-weight: 600;
+                color: #666;
+                cursor: pointer;
+                border-radius: 8px 8px 0 0;
+                transition: all 0.3s ease;
+                position: relative;
+            }
+
+            .tab.active {
+                color: #667eea;
+                background: #f8f9ff;
+            }
+
+            .tab.active::after {
+                content: '';
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #667eea;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            .test-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 25px;
+            }
+
+            .test-card {
+                border: 2px solid #e1e5e9;
+                border-radius: 16px;
+                padding: 25px;
+                transition: all 0.3s ease;
+                background: #fff;
+            }
+
+            .test-card:hover {
+                border-color: #667eea;
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+            }
+
+            .test-card.completed {
+                border-color: #2ed573;
+                background: #f1fdf6;
+            }
+
+            .test-title {
+                font-size: 20px;
+                font-weight: 700;
+                color: #2c3e50;
+                margin-bottom: 10px;
+            }
+
+            .test-meta {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 15px;
+                font-size: 14px;
+                color: #666;
+            }
+
+            .test-description {
+                color: #7f8c8d;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            .test-actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            .btn {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                display: inline-block;
+                text-align: center;
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            }
+
+            .btn-secondary {
+                background: #f1f2f6;
+                color: #666;
+            }
+
+            .btn-secondary:hover {
+                background: #e4e6ea;
+            }
+
+            .btn-success {
+                background: #2ed573;
+                color: white;
+            }
+
+            /* Test Screen */
+            .test-container {
+                background: #2c3e50;
+                color: white;
+                min-height: 100vh;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .test-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.1);
+                padding: 20px 30px;
+                border-radius: 12px;
+                margin-bottom: 30px;
+                backdrop-filter: blur(10px);
+            }
+
+            .test-info h2 {
+                font-size: 24px;
+                margin-bottom: 5px;
+            }
+
+            .test-progress {
+                font-size: 16px;
+                opacity: 0.8;
+            }
+
+            .timer {
+                background: #e74c3c;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-size: 24px;
+                font-weight: 700;
+                min-width: 150px;
+                text-align: center;
+            }
+
+            .test-content {
+                display: flex;
+                gap: 30px;
+                flex: 1;
+                max-width: 1400px;
+                margin: 0 auto;
+                width: 100%;
+            }
+
+            .question-panel {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .navigation-panel {
+                width: 300px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
+                padding: 25px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                height: fit-content;
+                position: sticky;
+                top: 20px;
+            }
+
+            .nav-panel-title {
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 20px;
+                color: white;
+                text-align: center;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+                padding-bottom: 15px;
+            }
+
+            .question-grid {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 10px;
+                margin-bottom: 25px;
+            }
+
+            .question-nav-btn {
+                width: 45px;
+                height: 45px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                background: transparent;
+                color: white;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                position: relative;
+            }
+
+            .question-nav-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                transform: scale(1.05);
+            }
+
+            .question-nav-btn.current {
+                background: #667eea;
+                border-color: #667eea;
+                box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+            }
+
+            .question-nav-btn.answered {
+                background: #2ed573;
+                border-color: #2ed573;
+            }
+
+            .question-nav-btn.flagged {
+                background: #ffa502;
+                border-color: #ffa502;
+            }
+
+            .question-nav-btn.flagged::after {
+                content: '🚩';
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                font-size: 12px;
+            }
+
+            .nav-legend {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                font-size: 14px;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .legend-color {
+                width: 20px;
+                height: 20px;
+                border-radius: 4px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .legend-current { background: #667eea; border-color: #667eea; }
+            .legend-answered { background: #2ed573; border-color: #2ed573; }
+            .legend-flagged { background: #ffa502; border-color: #ffa502; }
+            .legend-unanswered { background: transparent; }
+
+            .question-card {
+                background: white;
+                color: #2c3e50;
+                padding: 40px;
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                margin-bottom: 30px;
+            }
+
+            .question-number {
+                background: #667eea;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 600;
+                display: inline-block;
+                margin-bottom: 20px;
+            }
+
+            .question-text {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 30px;
+                line-height: 1.6;
+            }
+
+            .options {
+                display: grid;
+                gap: 15px;
+            }
+
+            .option {
+                padding: 20px;
+                border: 2px solid #e1e5e9;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .option:hover {
+                border-color: #667eea;
+                background: #f8f9ff;
+            }
+
+            .option.selected {
+                border-color: #667eea;
+                background: #667eea;
+                color: white;
+            }
+
+            .option-label {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background: #f1f2f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                flex-shrink: 0;
+            }
+
+            .option.selected .option-label {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+            }
+
+            .test-navigation {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 40px;
+            }
+
+            .nav-btn {
+                padding: 15px 30px;
+                background: #667eea;
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .nav-btn:hover {
+                background: #5a6fd8;
+                transform: translateY(-2px);
+            }
+
+            .nav-btn:disabled {
+                background: #95a5a6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .submit-btn {
+                background: #e74c3c;
+            }
+
+            .submit-btn:hover {
+                background: #c0392b;
+            }
+
+            /* Results Screen */
+            .results-container {
+                background: #f5f7fa;
+                min-height: 100vh;
+                padding: 40px;
+            }
+
+            .results-header {
+                text-align: center;
+                margin-bottom: 50px;
+            }
+
+            .results-title {
+                font-size: 48px;
+                font-weight: 800;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 10px;
+            }
+
+            .results-subtitle {
+                font-size: 20px;
+                color: #666;
+            }
+
+            .results-content {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+            .score-section {
+                background: white;
+                padding: 40px;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                margin-bottom: 40px;
+                text-align: center;
+            }
+
+            .score-circle {
+                width: 200px;
+                height: 200px;
+                border-radius: 50%;
+                background: conic-gradient(#2ed573 0deg 252deg, #e1e5e9 252deg 360deg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 30px;
+            }
+
+            .score-inner {
+                width: 160px;
+                height: 160px;
+                border-radius: 50%;
+                background: white;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .score-percentage {
+                font-size: 48px;
+                font-weight: 800;
+                color: #2ed573;
+            }
+
+            .score-text {
+                font-size: 16px;
+                color: #666;
+                font-weight: 600;
+            }
+
+            .results-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 30px;
+            }
+
+            .result-card {
+                background: white;
+                padding: 30px;
+                border-radius: 16px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+                text-align: center;
+            }
+
+            .result-icon {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                margin: 0 auto 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                color: white;
+            }
+
+            .correct { background: #2ed573; }
+            .incorrect { background: #ff4757; }
+            .unattempted { background: #ffa502; }
+            .time-taken { background: #3742fa; }
+
+            .result-number {
+                font-size: 36px;
+                font-weight: 800;
+                margin-bottom: 10px;
+            }
+
+            .result-label {
+                font-size: 16px;
+                color: #666;
+                font-weight: 600;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 1200px) {
+                .test-content {
+                    flex-direction: column;
+                }
+                
+                .navigation-panel {
+                    width: 100%;
+                    position: static;
+                    order: -1;
+                }
+                
+                .question-grid {
+                    grid-template-columns: repeat(10, 1fr);
+                }
+            }
+
+            @media (max-width: 768px) {
+                .dashboard-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .test-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .results-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .question-grid {
+                    grid-template-columns: repeat(5, 1fr);
+                }
+            }
+            
+        </style>
+    </head>
+    <body>
+        <!-- Mobile/Tablet Restriction Screen -->
+        <div class="mobile-restriction">
+            <div class="restriction-icon">🖥️</div>
+            <h1 class="restriction-title">Desktop Required</h1>
+            <p class="restriction-message">
+                SECE Test Portal is designed for secure testing and requires a desktop or laptop computer. 
+                Please access this platform from a larger screen device to ensure the best testing experience and maintain exam integrity.
+            </p>
+        </div>
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen active">
+            <div class="login-container">
+                <!-- Animation on the left (optional) -->
+                <div style="width: 500px; height: 370px; overflow: hidden; border-radius: 10px;">
+                    <dotlottie-player src="https://lottie.host/7f38ba96-d636-4730-afe4-d4d82e6ddaa9/PuNTgZwZaR.lottie" 
+                    background="transparent" 
+                    speed="1" 
+                    style="width: 400px; height: 400px" 
+                    loop 
+                    autoplay>
+                </dotlottie-player>
+                </div>
+
+                <div class="login-card">
+                    <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                        <img src="https://ik.imagekit.io/ycoh0ng50s/Logos/Logo%20-%20Sece.png?updatedAt=1749314791750" alt="College Logo" style="height: 60px; margin-right: 15px;">
+                        <div class="logo">SECE Test Portal</div>
+                    </div>
+                    <p class="tagline">Online Test Platform for Assessment</p>
+                    
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="rollNumber">Roll Number</label>
+                            <input type="text" id="rollNumber" name="rollNumber" placeholder="Enter your Roll Number, Eg:19CS030" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+                        
+                        <button type="submit" class="login-btn">Login to Dashboard</button>
+                        <div class="auth-switch">
+                            <p>Don't have an account?</p>
+                            <a href="#" class="switch-link" onclick="showRegistration()">Register here</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Screen -->
+        <div id="registrationScreen" class="screen">
+            <div class="register-container">
+                <!-- Animation on the left (same as login) -->
+                <div style="width: 500px; height: 370px; overflow: hidden; border-radius: 10px;">
+                    <dotlottie-player src="https://lottie.host/7f38ba96-d636-4730-afe4-d4d82e6ddaa9/PuNTgZwZaR.lottie" 
+                    background="transparent" 
+                    speed="1" 
+                    style="width: 400px; height: 400px" 
+                    loop 
+                    autoplay>
+                </dotlottie-player>
+                </div>
+
+                <div class="register-card">
+                    <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                        <img src="https://ik.imagekit.io/ycoh0ng50s/Logos/Logo%20-%20Sece.png?updatedAt=1749314791750" alt="College Logo" style="height: 60px; margin-right: 15px;">
+                        <div class="logo">Create Account</div>
+                    </div>
+                    <p class="tagline">Join SECE Test Portal</p>
+                
+                    <form id="registrationForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <input type="text" id="firstName" name="firstName" placeholder="Enter first name" required>
+                            </div>
+                        
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <input type="text" id="lastName" name="lastName" placeholder="Enter last name" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="Enter your college email, Eg:abc@sece.ac.in" required>
+                        </div>
+                    
+                        <div class="form-group full-width">
+                            <label for="regrollNumber">Roll Number</label>
+                            <input type="text" id="regrollNumber" name="rollNumber" placeholder="Enter your Roll Number, Eg:19CS030" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="department">Department</label>
+                                <select id="department" name="department" class="department-select" required>
+                                    <option value="">Select Department</option>
+                                    <option value="AI-DS - A">AI-DS - A</option>
+                                    <option value="AI-DS - B">AI-DS - B</option>
+                                    <option value="AI-DS - C">AI-DS - C</option>
+                                    <option value="AI-DS - D">AI-DS - D</option>
+                                    <option value="AI-ML - A">AI-ML - A</option>
+                                    <option value="AI-ML - B">AI-ML - B</option>
+                                    <option value="CCE">CCE</option>
+                                    <option value="CSBS">CSBS</option>
+                                    <option value="CSE - A">CSE - A</option>
+                                    <option value="CSE - B">CSE - B</option>
+                                    <option value="CSE - C">CSE - C</option>
+                                    <option value="CSE - D">CSE - D</option>
+                                    <option value="ECE - A">ECE - A</option>
+                                    <option value="ECE - B">ECE - B</option>
+                                    <option value="ECE - C">ECE - C</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="IT">IT</option>
+                                    <option value="MECH">MECH</option>
+                                </select>
+                            </div>
+                        
+                            <div class="form-group">
+                                <label for="year">Academic Year</label>
+                                <select id="year" name="year" class="year-select" required>
+                                    <option value="">Select Year</option>
+                                    <option value="2021-2025">2021-2025</option>
+                                    <option value="2022-2026">2022-2026</option>
+                                    <option value="2023-2027">2023-2027</option>
+                                    <option value="2024-2028">2024-2028</option>
+                                    <option value="2025-2029">2025-2029</option>
+                                    <option value="2026-2030">2026-2030</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="regPassword">Password</label>
+                                <input type="password" id="regPassword" name="password" placeholder="Create password" required>
+                            </div>
+                        
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
+                            </div>
+                        </div>
+                    
+                        <button type="submit" class="login-btn">Create Account</button>
+                    </form>
+
+                    <div class="auth-switch">
+                        <p>Already have an account?</p>
+                        <a href="#" class="switch-link" onclick="showLogin()">Sign in here</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboardScreen" class="screen">
+            <div class="dashboard">
+                <nav class="navbar">
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <img src="https://ik.imagekit.io/ycoh0ng50s/Logos/Logo%20-%20Sece.png?updatedAt=1749314791750" alt="College Logo" style="height: 60px; margin-right: 15px;">
+                        <div class="logo">SECE TEST PORTAL</div>
+                    </div>
+                    <div class="nav-user">
+                        <div class="user-avatar">JS</div>
+                        <span>John Smith</span>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                </nav>
+
+                <div class="dashboard-content">
+                    <div class="dashboard-header">
+                        <h1 class="dashboard-title">Welcome, John!</h1>
+                        <p class="dashboard-subtitle">Track your progress and take new tests</p>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="profile-section">
+                            <h2 class="section-title">
+                                <span>👤</span> Profile Information
+                            </h2>
+                            <div class="profile-info">
+                                <div class="info-item">
+                                    <div class="info-label">Roll Number</div>
+                                    <div class="info-value">21CS030</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Department</div>
+                                    <div class="info-value">Computer Science</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Year</div>
+                                    <div class="info-value">3rd Year</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Email</div>
+                                    <div class="info-value">john.smith@college.edu</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stats-section">
+                            <h2 class="section-title">
+                                <span>📊</span> Your Statistics
+                            </h2>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number">12</div>
+                                    <div class="stat-label">Tests Completed</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">85%</div>
+                                    <div class="stat-label">Average Score</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">3</div>
+                                    <div class="stat-label">Pending Tests</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tests-section">
+                        <h2 class="section-title">
+                            <span>📝</span> Tests & Materials
+                        </h2>
+                        
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchTab('available')">Available Tests</button>
+                            <button class="tab" onclick="switchTab('completed')">Completed Tests</button>
+                            <button class="tab" onclick="switchTab('practice')">Practice Materials</button>
+                        </div>
+
+                        <div id="availableTab" class="tab-content active">
+                            <div class="test-grid">
+                                <div class="test-card">
+                                    <h3 class="test-title">Data Structures & Algorithms</h3>
+                                    <div class="test-meta">
+                                        <span>📅 Due: Dec 15, 2024</span>
+                                        <span>⏱️ 60 minutes</span>
+                                        <span>❓ 30 questions</span>
+                                    </div>
+                                    <p class="test-description">Comprehensive test covering arrays, linked lists, stacks, queues, trees, and sorting algorithms.</p>
+                                    <div class="test-actions">
+                                        <button class="btn btn-primary" onclick="startTest()">Start Test</button>
+                                        <button class="btn btn-secondary">View Details</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="test-card">
+                                    <h3 class="test-title">Database Management Systems</h3>
+                                    <div class="test-meta">
+                                        <span>📅 Due: Dec 20, 2024</span>
+                                        <span>⏱️ 45 minutes</span>
+                                        <span>❓ 25 questions</span>
+                                    </div>
+                                    <p class="test-description">Test on SQL queries, normalization, transactions, and database design principles.</p>
+                                    <div class="test-actions">
+                                        <button class="btn btn-primary" onclick="startTest()">Start Test</button>
+                                        <button class="btn btn-secondary">View Details</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="test-card">
+                                    <h3 class="test-title">Operating Systems</h3>
+                                    <div class="test-meta">
+                                        <span>📅 Due: Dec 25, 2024</span>
+                                        <span>⏱️ 50 minutes</span>
+                                        <span>❓ 20 questions</span>
+                                    </div>
+                                    <p class="test-description">Covers process management, memory management, file systems, and synchronization.</p>
+                                    <div class="test-actions">
+                                        <button class="btn btn-primary" onclick="startTest()">Start Test</button>
+                                        <button class="btn btn-secondary">View Details</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="completedTab" class="tab-content">
+                            <div class="test-grid">
+                                <div class="test-card completed">
+                                    <h3 class="test-title">Object-Oriented Programming</h3>
+                                    <div class="test-meta">
+                                        <span>✅ Completed: Nov 28, 2024</span>
+                                        <span>📊 Score: 92%</span>
+                                        <span>⏱️ Time: 35 min</span>
+                                    </div>
+                                    <p class="test-description">Test on OOP concepts, inheritance, polymorphism, and design patterns.</p>
+                                    <div class="test-actions">
+                                        <button class="btn btn-success" onclick="viewResults()">View Results</button>
+                                        <button class="btn btn-secondary">Download Certificate</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="test-card completed">
+                                    <h3 class="test-title">Computer Networks</h3>
+                                    <div class="test-meta">
+                                        <span>✅ Completed: Nov 20, 2024</span>
+                                        <span>📊 Score: 78%</span>
+                                        <span>⏱️ Time: 42 min</span>
+                                    </div>
+                                    <p class="test-description">Comprehensive test on networking protocols, OSI model, and network security.</p>
+                                    <div class="test-actions">
+                                        <button class="btn btn-success" onclick="viewResults()">View Results</button>
+                                        <button class="btn btn-secondary">Download Certificate</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="practiceTab" class="tab-content">
+                            <div class="test-grid">
+                                <div class="test-card">
+                                    <h3 class="test-title">Practice Set: Java Programming</h3>
+                                    <div class="test-meta">
+                                        <span>📚 50+ Questions</span>
+                                        <span>🎯 Beginner to Advanced</span>
+                                        <span>⏱️ Unlimited Time</span>
+                                    </div>
+                                    <p class="test-description">Practice questions covering Java syntax, OOP concepts, collections, and exception handling.</p>
+                                    <div class="test-actions">
+                                        <button class="btn btn-primary">Start Practice</button>
+                                        <button class="btn btn-secondary">Download PDF</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Screen -->
+        <div id="testScreen" class="screen">
+            <div class="test-container">
+                <div class="test-header">
+                    <div class="test-info">
+                        <h2>Data Structures & Algorithms</h2>
+                        <div class="test-progress">Question 1 of 30</div>
+                    </div>
+                    <div class="timer" id="timer">59:42</div>
+                </div>
+
+                <div class="test-content">
+                    <div class="question-panel">
+                        <div class="question-card">
+                            <div class="question-number">Question 1</div>
+                            <div class="question-text">
+                                What is the time complexity of inserting an element at the beginning of an array?
+                            </div>
+                            
+                            <div class="options">
+                                <div class="option" onclick="selectOption(this)">
+                                    <div class="option-label">A</div>
+                                    <div class="option-text">O(1)</div>
+                                </div>
+                                <div class="option" onclick="selectOption(this)">
+                                    <div class="option-label">B</div>
+                                    <div class="option-text">O(log n)</div>
+                                </div>
+                                <div class="option" onclick="selectOption(this)">
+                                    <div class="option-label">C</div>
+                                    <div class="option-text">O(n)</div>
+                                </div>
+                                <div class="option" onclick="selectOption(this)">
+                                    <div class="option-label">D</div>
+                                    <div class="option-text">O(n²)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="test-navigation">
+                            <button class="nav-btn" id="prevBtn" onclick="prevQuestion()" disabled>Previous</button>
+                            <div style="display: flex; gap: 15px;">
+                                <button class="nav-btn" onclick="flagQuestion()">Flag Question</button>
+                                <button class="nav-btn" onclick="clearAnswer()">Clear Answer</button>
+                            </div>
+                            <button class="nav-btn" id="nextBtn" onclick="nextQuestion()">Next</button>
+                            <button class="nav-btn submit-btn" onclick="submitTest()" style="display: none;">Submit Test</button>
+                        </div>
+                    </div>
+
+                    <div class="navigation-panel">
+                        <div class="nav-panel-title">Question Navigator</div>
+                        
+                        <div class="question-grid" id="questionGrid">
+                            <!-- Question buttons will be generated by JavaScript -->
+                        </div>
+
+                        <div class="nav-legend">
+                            <div class="legend-item">
+                                <div class="legend-color legend-current"></div>
+                                <span>Current</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-answered"></div>
+                                <span>Answered</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-flagged"></div>
+                                <span>Flagged</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-unanswered"></div>
+                                <span>Not Answered</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                            <button class="nav-btn submit-btn" onclick="submitTest()" style="width: 100%; background: #e74c3c;">
+                                Submit Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen">
+            <div class="results-container">
+                <div class="results-header">
+                    <h1 class="results-title">Test Completed!</h1>
+                    <p class="results-subtitle">Data Structures & Algorithms - Results</p>
+                </div>
+
+                <div class="results-content">
+                    <div class="score-section">
+                        <div class="score-circle">
+                            <div class="score-inner">
+                                <div class="score-percentage">85%</div>
+                                <div class="score-text">Overall Score</div>
+                            </div>
+                        </div>
+                        <h3 style="font-size: 24px; color: #2c3e50; margin-bottom: 10px;">Excellent Performance!</h3>
+                        <p style="color: #666; font-size: 16px;">You scored 85% (25/30 questions correct)</p>
+                    </div>
+
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-icon correct">✓</div>
+                            <div class="result-number">25</div>
+                            <div class="result-label">Correct Answers</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <div class="result-icon incorrect">✗</div>
+                            <div class="result-number">4</div>
+                            <div class="result-label">Incorrect Answers</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <div class="result-icon unattempted">?</div>
+                            <div class="result-number">1</div>
+                            <div class="result-label">Unattempted</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <div class="result-icon time-taken">⏱</div>
+                            <div class="result-number">45:30</div>
+                            <div class="result-label">Time Taken</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 40px;">
+                        <button class="btn btn-primary" onclick="goToDashboard()" style="margin-right: 15px;">Back to Dashboard</button>
+                        <button class="btn btn-secondary" onclick="downloadReport()">Download Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Global variables
+            let currentScreen = 'loginScreen';
+            let currentQuestion = 0;
+            let totalQuestions = 30;
+            let timeRemaining = 3600; // 60 minutes in seconds
+            let timerInterval;
+            let selectedAnswers = {};
+            let flaggedQuestions = new Set();
+
+            // Supabase configuration
+            const SUPABASE_URL = 'https://rzgfsfwafdtmkarorkax.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Z2ZzZndhZmR0bWthcm9ya2F4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMjUwNzksImV4cCI6MjA2NDkwMTA3OX0.YG-BAlSoRfYbM1tmEizbr2CMdklE89FEi96nXTjhoaE';
+
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Sample questions data
+            const questions = [
+                {
+                    id: 1,
+                    question: "What is the time complexity of inserting an element at the beginning of an array?",
+                    options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+                    correct: 2
+                },
+                {
+                    id: 2,
+                    question: "Which data structure follows the LIFO (Last In First Out) principle?",
+                    options: ["Queue", "Stack", "Array", "Linked List"],
+                    correct: 1
+                },
+                // Add more questions as needed
+            ];
+
+            // Screen management
+            function showScreen(screenId) {
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                document.getElementById(screenId).classList.add('active');
+                currentScreen = screenId;
+            }
+
+            // Login functionality
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const rollNumber = document.getElementById('rollNumber').value;
+                const password = document.getElementById('password').value;
+    
+                if (!rollNumber || !password) {
+                    alert('Please enter both Roll Number and Password');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = this.querySelector('.login-btn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Signing In...';
+                submitBtn.disabled = true;
+
+                try {
+                    // First, get the email associated with the student ID
+                    const { data: userData, error: fetchError } = await supabase
+                        .from('users')
+                        .select('email, first_name, last_name, department, academic_year')
+                        .eq('roll_number', rollNumber)
+                        .single();
+
+                    if (fetchError || !userData) {
+                        throw new Error('Roll Number not found. Please check your Roll Number or register first.');
+                    }
+
+                    // Check if email is verified
+                    const { data: authUser } = await supabase.auth.getUser();
+                    if (authUser.user && !authUser.user.email_confirmed_at) {
+                        throw new Error('Email not confirmed. Please check your email and click the verification link.');
+                    }
+
+                    // Sign in with email and password
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: userData.email,
+                        password: password,
+                    });
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    // Store user data in localStorage for dashboard
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        rollNumber: rollNumber,
+                        firstName: userData.first_name,
+                        lastName: userData.last_name,
+                        email: userData.email,
+                        department: userData.department,
+                        academicYear: userData.academic_year
+                    }));
+
+                    // Update dashboard with user data
+                    updateDashboardUserInfo(userData, rollNumber);
+        
+                    showScreen('dashboardScreen');
+
+                } catch (error) {
+                    console.error('Login error:', error);
+                    if (error.message.includes('Invalid login credentials')) {
+                        alert('Invalid password. Please try again.');
+                    } else if (error.message.includes('Email not confirmed')) {
+                        alert('Please verify your email first. Check your inbox for the verification link.');
+                    } else if (error.message.includes('Roll Number not found')) {
+                        alert('Roll Number not found. Please check your Roll Number or register first.');
+                    } else {
+                        alert('Login failed: ' + error.message);
+                    }
+                } finally {
+                    // Restore button state
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // Dashboard functionality
+            function switchTab(tabName) {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                event.target.classList.add('active');
+                document.getElementById(tabName + 'Tab').classList.add('active');
+            }
+
+            // Update dashboard with user information
+            function updateDashboardUserInfo(userData, rollNumber) {
+                // Update navbar
+                const userAvatar = document.querySelector('.user-avatar');
+                const userName = document.querySelector('.nav-user span');
+                const welcomeTitle = document.querySelector('.dashboard-title');
+    
+                const initials = (userData.first_name.charAt(0) + userData.last_name.charAt(0)).toUpperCase();
+                userAvatar.textContent = initials;
+                userName.textContent = userData.first_name + ' ' + userData.last_name;
+                welcomeTitle.textContent = `Welcome, ${userData.first_name}!`;
+    
+                // Update profile section
+                const infoValues = document.querySelectorAll('.info-value');
+                infoValues[0].textContent = rollNumber; // Roll Number
+                infoValues[1].textContent = userData.department; // Department
+                infoValues[2].textContent = userData.academic_year; // Year
+                infoValues[3].textContent = userData.email; // Email
+            }
+
+            async function logout() {
+                try {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) {
+                        console.error('Logout error:', error);
+                    }
+        
+                    // Clear stored user data
+                    localStorage.removeItem('currentUser');
+        
+                    showScreen('loginScreen');
+                    clearTestData();
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    // Still proceed with logout even if there's an error
+                    localStorage.removeItem('currentUser');
+                    showScreen('loginScreen');
+                    clearTestData();
+                }
+            }
+
+            function clearTestData() {
+                currentQuestion = 0;
+                selectedAnswers = {};
+                flaggedQuestions.clear();
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+            }
+
+            // Test functionality
+            function startTest() {
+                // In a real app, you would first check if user is ready
+                if (confirm('Are you ready to start the test? Once started, you cannot pause or leave the test.')) {
+                    showScreen('testScreen');
+                    initializeTest();
+                    startTimer();
+                    enterFullscreen();
+                }
+            }
+
+            function initializeTest() {
+                currentQuestion = 0;
+                selectedAnswers = {};
+                flaggedQuestions.clear();
+                generateQuestionNavigator();
+                loadQuestion();
+            }
+
+            function generateQuestionNavigator() {
+                const questionGrid = document.getElementById('questionGrid');
+                questionGrid.innerHTML = '';
+                
+                for (let i = 0; i < totalQuestions; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'question-nav-btn';
+                    btn.textContent = i + 1;
+                    btn.onclick = () => goToQuestion(i);
+                    questionGrid.appendChild(btn);
+                }
+                updateQuestionNavigator();
+            }
+
+            function updateQuestionNavigator() {
+                const navButtons = document.querySelectorAll('.question-nav-btn');
+                
+                navButtons.forEach((btn, index) => {
+                    btn.classList.remove('current', 'answered', 'flagged');
+                    
+                    if (index === currentQuestion) {
+                        btn.classList.add('current');
+                    } else if (selectedAnswers.hasOwnProperty(index)) {
+                        btn.classList.add('answered');
+                    }
+                    
+                    if (flaggedQuestions.has(index)) {
+                        btn.classList.add('flagged');
+                    }
+                });
+            }
+
+            function goToQuestion(questionIndex) {
+                if (questionIndex >= 0 && questionIndex < totalQuestions) {
+                    currentQuestion = questionIndex;
+                    loadQuestion();
+                }
+            }
+
+            function loadQuestion() {
+                const question = questions[currentQuestion] || {
+                    question: `Sample question ${currentQuestion + 1}: What is the time complexity of inserting an element at the beginning of an array?`,
+                    options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+                    correct: 2
+                };
+                
+                document.querySelector('.question-number').textContent = `Question ${currentQuestion + 1}`;
+                document.querySelector('.question-text').textContent = question.question;
+                document.querySelector('.test-progress').textContent = `Question ${currentQuestion + 1} of ${totalQuestions}`;
+                
+                const options = document.querySelectorAll('.option');
+                options.forEach((option, index) => {
+                    option.classList.remove('selected');
+                    option.querySelector('.option-text').textContent = question.options[index] || `Option ${index + 1}`;
+                    
+                    // Restore previous selection if any
+                    if (selectedAnswers[currentQuestion] === index) {
+                        option.classList.add('selected');
+                    }
+                });
+                
+                updateNavigationButtons();
+                updateQuestionNavigator();
+            }
+
+            function selectOption(option) {
+                // Remove selection from all options
+                document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                
+                // Add selection to clicked option
+                option.classList.add('selected');
+                
+                // Store the answer
+                const optionIndex = Array.from(document.querySelectorAll('.option')).indexOf(option);
+                selectedAnswers[currentQuestion] = optionIndex;
+                
+                // Update the question navigator to show this question as answered
+                updateQuestionNavigator();
+            }
+
+            function nextQuestion() {
+                if (currentQuestion < totalQuestions - 1) {
+                    currentQuestion++;
+                    loadQuestion();
+                }
+            }
+
+            function prevQuestion() {
+                if (currentQuestion > 0) {
+                    currentQuestion--;
+                    loadQuestion();
+                }
+            }
+
+            function updateNavigationButtons() {
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const submitBtn = document.querySelector('.submit-btn');
+                
+                prevBtn.disabled = currentQuestion === 0;
+                
+                if (currentQuestion === totalQuestions - 1) {
+                    nextBtn.style.display = 'none';
+                    submitBtn.style.display = 'inline-block';
+                } else {
+                    nextBtn.style.display = 'inline-block';
+                    submitBtn.style.display = 'none';
+                }
+            }
+
+            function flagQuestion() {
+                if (flaggedQuestions.has(currentQuestion)) {
+                    flaggedQuestions.delete(currentQuestion);
+                    alert('Question unflagged for review');
+                } else {
+                    flaggedQuestions.add(currentQuestion);
+                    alert('Question flagged for review');
+                }
+                updateQuestionNavigator();
+            }
+
+            function clearAnswer() {
+                document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                delete selectedAnswers[currentQuestion];
+                updateQuestionNavigator();
+            }
+
+            function submitTest() {
+                const answeredCount = Object.keys(selectedAnswers).length;
+                const unansweredCount = totalQuestions - answeredCount;
+                
+                let confirmMessage = `Are you sure you want to submit the test?\n\n`;
+                confirmMessage += `Answered: ${answeredCount} questions\n`;
+                confirmMessage += `Unanswered: ${unansweredCount} questions\n`;
+                
+                if (unansweredCount > 0) {
+                    confirmMessage += `\nNote: Unanswered questions will be marked as incorrect.`;
+                }
+                
+                if (confirm(confirmMessage)) {
+                    clearInterval(timerInterval);
+                    calculateResults();
+                    showScreen('resultsScreen');
+                    exitFullscreen();
+                }
+            }
+
+            function calculateResults() {
+                let correct = 0;
+                let incorrect = 0;
+                let unattempted = 0;
+                
+                for (let i = 0; i < totalQuestions; i++) {
+                    if (selectedAnswers.hasOwnProperty(i)) {
+                        if (i < questions.length && selectedAnswers[i] === questions[i].correct) {
+                            correct++;
+                        } else {
+                            incorrect++;
+                        }
+                    } else {
+                        unattempted++;
+                    }
+                }
+                
+                const percentage = Math.round((correct / totalQuestions) * 100);
+                
+                // Update results display
+                document.querySelector('.score-percentage').textContent = percentage + '%';
+                document.querySelector('.score-text').textContent = 'Overall Score';
+                
+                const resultNumbers = document.querySelectorAll('.result-number');
+                resultNumbers[0].textContent = correct;
+                resultNumbers[1].textContent = incorrect;
+                resultNumbers[2].textContent = unattempted;
+                
+                const timeTaken = formatTime(3600 - timeRemaining);
+                resultNumbers[3].textContent = timeTaken;
+                
+                // Update score circle
+                const scoreCircle = document.querySelector('.score-circle');
+                const angle = (percentage / 100) * 360;
+                scoreCircle.style.background = `conic-gradient(#2ed573 0deg ${angle}deg, #e1e5e9 ${angle}deg 360deg)`;
+            }
+
+            // Timer functionality
+            function startTimer() {
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    
+                    if (timeRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        alert('Time is up! Test will be submitted automatically.');
+                        submitTest();
+                    }
+                }, 1000);
+            }
+
+            function updateTimerDisplay() {
+                const timer = document.getElementById('timer');
+                timer.textContent = formatTime(timeRemaining);
+                
+                // Change color when time is running low
+                if (timeRemaining <= 300) { // 5 minutes
+                    timer.style.background = '#e74c3c';
+                } else if (timeRemaining <= 600) { // 10 minutes
+                    timer.style.background = '#f39c12';
+                }
+            }
+
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+
+            // Fullscreen functionality
+            function enterFullscreen() {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            }
+
+            function exitFullscreen() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+
+            // Prevent right-click during test
+            document.addEventListener('contextmenu', function(e) {
+                if (currentScreen === 'testScreen') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Prevent certain keyboard shortcuts during test
+            document.addEventListener('keydown', function(e) {
+                if (currentScreen === 'testScreen') {
+                    // Prevent F12, Ctrl+Shift+I, Ctrl+U, etc.
+                    if (e.key === 'F12' || 
+                        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                        (e.ctrlKey && e.key === 'u') ||
+                        (e.ctrlKey && e.key === 'U')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+
+            // Detect window focus/blur during test
+            window.addEventListener('blur', function() {
+                if (currentScreen === 'testScreen') {
+                    alert('Warning: You switched away from the test window. This action has been logged.');
+                }
+            });
+
+            // Results functionality
+            function viewResults() {
+                showScreen('resultsScreen');
+            }
+
+            function goToDashboard() {
+                showScreen('dashboardScreen');
+            }
+
+            function downloadReport() {
+                alert('Report download functionality would be implemented here');
+            }
+
+            // Initialize navigation
+            document.addEventListener('keydown', function(e) {
+                if (currentScreen === 'testScreen') {
+                    if (e.key === 'ArrowLeft') {
+                        prevQuestion();
+                    } else if (e.key === 'ArrowRight') {
+                        nextQuestion();
+                    }
+                }
+            });
+
+            // Registration functionality
+            function showRegistration() {
+                showScreen('registrationScreen');
+            }
+
+            function showLogin() {
+                showScreen('loginScreen');
+            }
+
+            // Handle email confirmation on page load
+            document.addEventListener('DOMContentLoaded', async function() {
+                // Check if this is a redirect from email confirmation
+                const urlParams = new URLSearchParams(window.location.hash.substring(1));
+                const searchParams = new URLSearchParams(window.location.search);
+
+                // Check both hash and search params for email confirmation
+                const type = urlParams.get('type') || searchParams.get('type');
+                const accessToken = urlParams.get('access_token') || searchParams.get('access_token');
+                const refreshToken = urlParams.get('refresh_token') || searchParams.get('refresh_token');
+
+                if (type === 'signup' && accessToken && refreshToken) {
+                    try {
+                        const { data, error } = await supabase.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken
+                        });
+        
+                        if (error) throw error;
+
+                        // Update user's email_verified status in your users table
+                        if (data.user) {
+                            const { error: updateError } = await supabase
+                                .from('users')
+                                .update({ email_verified: true })
+                                .eq('email', data.user.email);
+                
+                            if (updateError) {
+                                console.error('Error updating verification status:', updateError);
+                            }
+                        }
+        
+                        alert('Email verified successfully! You can now log in with your roll number and password.');
+                        // Clean up the URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        showLogin();
+                    } catch (error) {
+                        console.error('Email verification error:', error);
+                        alert('Email verification failed. Please try again or contact support.');
+                    }
+                }
+
+                // Handle email confirmation type
+                if (type === 'email_change' || type === 'recovery') {
+                    alert('Email confirmed successfully! You can now log in.');
+                    showLogin();
+                }
+            });
+
+            // Handle registration form submission
+            document.addEventListener('DOMContentLoaded', function() {
+                const registrationForm = document.getElementById('registrationForm');
+                if (registrationForm) {
+                    registrationForm.addEventListener('submit', async function(e) {
+                        e.preventDefault();
+                
+                        const formData = new FormData(this);
+                        const password = formData.get('password');
+                        const confirmPassword = formData.get('confirmPassword');
+                
+                        // Validate password match
+                        if (password !== confirmPassword) {
+                            alert('Passwords do not match!');
+                            return;
+                        }
+                
+                        // Validate password strength
+                        if (password.length < 4) {
+                            alert('Password must be at least 4 characters long!');
+                            return;
+                        }
+                
+                        // Validate email format (college email)
+                        const email = formData.get('email');
+                        if (!email.includes('@sece.ac.in')) {
+                            alert('Please enter a college email address!');
+                            return;
+                        }
+             
+                        // Show loading state
+                        const submitBtn = this.querySelector('.login-btn');
+                        const originalText = submitBtn.textContent;
+                        submitBtn.textContent = 'Creating Account...';
+                        submitBtn.disabled = true;
+
+                        try {
+                            // Register user in Supabase
+                            const { data, error } = await supabase.auth.signUp({
+                                email: email,
+                                password: password,
+                                options: {
+                                    data: {
+                                        first_name: formData.get('firstName'),
+                                        last_name: formData.get('lastName'),
+                                        roll_number: formData.get('rollNumber'),
+                                        department: formData.get('department'),
+                                        academic_year: formData.get('year')
+                                    }
+                                }
+                            });
+
+                            if (error) {
+                                throw error;
+                            }
+
+                            // Also store in custom users table
+                            const { error: dbError } = await supabase
+                                .from('users')
+                                .insert([
+                                    {
+                                        roll_number: formData.get('rollNumber'),
+                                        email: email,
+                                        first_name: formData.get('firstName'),
+                                        last_name: formData.get('lastName'),
+                                        department: formData.get('department'),
+                                        academic_year: formData.get('year'),
+                                        password_hash: 'handled_by_auth' // Supabase Auth handles password hashing
+                                    }
+                                ]);
+                                
+                            if (dbError) {
+                                console.error('Database error:', dbError);
+                            }
+
+                            alert('Registration successful! Please check your email to verify your account, then login.');
+                            this.reset();
+                            showLogin();
+
+                        } catch (error) {
+                            console.error('Registration error:', error);
+                            if (error.message.includes('already registered')) {
+                                alert('This email is already registered. Please try logging in instead.');
+                            } else {
+                                alert('Registration failed: ' + error.message);
+                            }
+                        } finally {
+                            // Restore button state
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                        }
+                    });
+                }
+            });
+        </script>
+    </body>
+    </html>
