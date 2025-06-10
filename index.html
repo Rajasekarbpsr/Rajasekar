@@ -1001,8 +1001,8 @@
                     
                     <form id="loginForm">
                         <div class="form-group">
-                            <label for="rollNumber">Roll Number</label>
-                            <input type="text" id="rollNumber" name="rollNumber" placeholder="Enter your Roll Number, Eg:19CS030" required>
+                            <label for="rollnumber">Roll Number</label>
+                            <input type="text" id="rollnumber" name="rollnumber" placeholder="Enter your Roll Number, Eg:19CS030" required>
                         </div>
                         
                         <div class="form-group">
@@ -1060,8 +1060,8 @@
                         </div>
                     
                         <div class="form-group full-width">
-                            <label for="regrollNumber">Roll Number</label>
-                            <input type="text" id="regrollNumber" name="rollNumber" placeholder="Enter your Roll Number, Eg:19CS030" required>
+                            <label for="regrollnumber">Roll Number</label>
+                            <input type="text" id="regrollnumber" name="rollnumber" placeholder="Enter your Roll Number, Eg:19CS030" required>
                         </div>
 
                         <div class="form-row">
@@ -1490,10 +1490,10 @@
             // Login functionality
             document.getElementById('loginForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const rollNumber = document.getElementById('rollNumber').value;
+                const rollnumber = document.getElementById('rollnumber').value;
                 const password = document.getElementById('password').value;
     
-                if (!rollNumber || !password) {
+                if (!rollnumber || !password) {
                     alert('Please enter both Roll Number and Password');
                     return;
                 }
@@ -1509,7 +1509,7 @@
                     const { data: userData, error: fetchError } = await supabase
                         .from('users')
                         .select('email, first_name, last_name, department, academic_year')
-                        .eq('roll_number', rollNumber)
+                        .eq('rollnumber', rollnumber)
                         .single();
 
                     if (fetchError || !userData) {
@@ -1534,7 +1534,7 @@
 
                     // Store user data in localStorage for dashboard
                     localStorage.setItem('currentUser', JSON.stringify({
-                        rollNumber: rollNumber,
+                        rollnumber: rollnumber,
                         firstName: userData.first_name,
                         lastName: userData.last_name,
                         email: userData.email,
@@ -1543,7 +1543,7 @@
                     }));
 
                     // Update dashboard with user data
-                    updateDashboardUserInfo(userData, rollNumber);
+                    updateDashboardUserInfo(userData, rollnumber);
         
                     showScreen('dashboardScreen');
 
@@ -1577,7 +1577,7 @@
             }
 
             // Update dashboard with user information
-            function updateDashboardUserInfo(userData, rollNumber) {
+            function updateDashboardUserInfo(userData, rollnumber) {
                 // Update navbar
                 const userAvatar = document.querySelector('.user-avatar');
                 const userName = document.querySelector('.nav-user span');
@@ -1590,7 +1590,7 @@
     
                 // Update profile section
                 const infoValues = document.querySelectorAll('.info-value');
-                infoValues[0].textContent = rollNumber; // Roll Number
+                infoValues[0].textContent = rollnumber; // Roll Number
                 infoValues[1].textContent = userData.department; // Department
                 infoValues[2].textContent = userData.academic_year; // Year
                 infoValues[3].textContent = userData.email; // Email
@@ -2039,7 +2039,7 @@
                                     data: {
                                         first_name: formData.get('firstName'),
                                         last_name: formData.get('lastName'),
-                                        roll_number: formData.get('rollNumber'),
+                                        rollnumber: formData.get('rollnumber'),
                                         department: formData.get('department'),
                                         academic_year: formData.get('year')
                                     }
@@ -2055,7 +2055,7 @@
                                 .from('users')
                                 .insert([
                                     {
-                                        roll_number: formData.get('rollNumber'),
+                                        rollnumber: formData.get('rollnumber'),
                                         email: email,
                                         first_name: formData.get('firstName'),
                                         last_name: formData.get('lastName'),
