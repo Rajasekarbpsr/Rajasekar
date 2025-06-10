@@ -1487,7 +1487,77 @@
                 currentScreen = screenId;
             }
 
-            // Custom Authentication System: Roll Number + Password Login with Email Verification
+            // Fixed Login functionality
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const rollnumber = document.getElementById('rollnumber').value;
+                const password = document.getElementById('password').value;
+
+                if (!rollnumber || !password) {
+                    alert('Please enter both Roll Number and Password');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = this.querySelector('.login-btn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Signing In...';
+                submitBtn.disabled = true;
+
+                try {
+                    // Step 1: Get the email associated with the roll number
+                    const { data: userData, error: fetchError } = await supabase
+                        .from('users')
+                        .select('email, first_name, last_name, department, academic_year, email_verified')
+                        .eq('rollnumber', rollnumber)
+                        .single();
+
+                    if (fetchError || !userData) {
+                        throw new Error('Roll Number not found. Please check your Roll Number or register first.');
+                    }
+
+                    // Step 2: Check if email is verified in your custom table
+                    if (!userData.email_verified) {
+                        throw new Error('Email not verified. Please check your email and click the verification link before logging in.');
+                    }
+
+                    // Step 3: Sign in with EMAIL and password (not roll number)
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: userData.email,  // Use email, not rollnumber
+                        password: password,
+                    });
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    // Step 4: Store user data in session/localStorage for app use
+                    const userSession = {
+                        rollnumber: rollnumber,
+                        email: userData.email,
+                        first_name: userData.first_name,
+                        last_name: userData.last_name,
+                        department: userData.department,
+                        academic_year: userData.academic_year
+                    };
+        
+                    // Store in sessionStorage (or use React state if using React)
+                    sessionStorage.setItem('userSession', JSON.stringify(userSession));
+
+                    // Step 5: Redirect to dashboard or main app
+                    alert('Login successful!');
+                    // Redirect to your main application screen
+                    showScreen('dashboardScreen'); // Replace with your actual dashboard function
+        
+                } catch (error) {
+                    console.error('Login error:', error);
+                    alert('Login failed: ' + error.message);
+                } finally {
+                    // Restore button state
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
 
             // Registration functionality
             function showRegistration() {
@@ -1498,8 +1568,8 @@
                 showScreen('loginScreen');
             }
 
-            // REGISTRATION FUNCTION
-            document.addEventListener('DOMContentLoaded', function() {
+            // Improved Registration functionality
+                document.addEventListener('DOMContentLoaded', function() {
                 const registrationForm = document.getElementById('registrationForm');
                 if (registrationForm) {
                     registrationForm.addEventListener('submit', async function(e) {
@@ -1523,9 +1593,9 @@
                             return;
                         }
     
-                        // Validate email format
+                        // Validate email format (college email)
                         if (!email.includes('@sece.ac.in')) {
-                            alert('Please enter a valid college email address!');
+                            alert('Please enter a valid college email address ending with @sece.ac.in!');
                             return;
                         }
 
@@ -1537,234 +1607,77 @@
 
                         try {
                             // Check if roll number already exists
-                            const { data: existingUser } = await supabase
+                            const { data: existingUser, error: checkError } = await supabase
                                 .from('users')
                                 .select('rollnumber')
                                 .eq('rollnumber', rollnumber)
                                 .single();
 
                             if (existingUser) {
-                                throw new Error('Roll number already registered.');
+                                throw new Error('Roll number already registered. Please use a different roll number or try logging in.');
                             }
 
-                            // Step 1: Create auth user with email (only for verification system)
-                            const { data: authData, error: authError } = await supabase.auth.signUp({
+                            // Register user in Supabase Auth
+                            const { data, error } = await supabase.auth.signUp({
                                 email: email,
-                                password: 'temp_password_for_verification_' + rollnumber, // Temporary password
+                                password: password,
                                 options: {
                                     data: {
+                                        first_name: formData.get('firstName'),
+                                        last_name: formData.get('lastName'),
                                         rollnumber: rollnumber,
-                                        purpose: 'email_verification_only'
+                                        department: formData.get('department'),
+                                        academic_year: formData.get('year')
                                     }
                                 }
                             });
 
-                            if (authError) {
-                                throw authError;
+                            if (error) {
+                                throw error;
                             }
 
-                            // Step 2: Hash the actual password for roll number login
-                            const passwordHash = await hashPassword(password);
-
-                            // Step 3: Store user data with custom authentication
+                            // Store in custom users table
                             const { error: dbError } = await supabase
                                 .from('users')
                                 .insert([
                                     {
                                         rollnumber: rollnumber,
                                         email: email,
-                                        password_hash: passwordHash, // Store hashed password for roll number auth
-                                        auth_user_id: authData.user.id, // Only for email verification tracking
                                         first_name: formData.get('firstName'),
                                         last_name: formData.get('lastName'),
                                         department: formData.get('department'),
                                         academic_year: formData.get('year'),
-                                        email_verified: false,
-                                        account_active: false, // Activated only after email verification
+                                        email_verified: false, // Will be updated when email is verified
                                         created_at: new Date().toISOString()
                                     }
                                 ]);
                     
                             if (dbError) {
                                 console.error('Database error:', dbError);
-                                throw new Error('Registration failed. Please try again.');
+                                // Even if DB insert fails, the auth user was created
+                                throw new Error('Registration partially successful. Please contact support.');
                             }
 
-                            alert('Registration successful! Please check your email to verify your account. After verification, you can login with your roll number and password.');
+                            alert('Registration successful! Please check your email to verify your account before logging in.');
                             this.reset();
                             showLogin();
 
                         } catch (error) {
                             console.error('Registration error:', error);
-                            alert('Registration failed: ' + error.message);
+                            if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+                                alert('This email is already registered. Please try logging in instead.');
+                            } else {
+                                alert('Registration failed: ' + error.message);
+                            }
                         } finally {
+                            // Restore button state
                             submitBtn.textContent = originalText;
                             submitBtn.disabled = false;
                         }
                     });
                 }
             });
-
-            // LOGIN FUNCTION - Pure Roll Number + Password Authentication
-            document.getElementById('loginForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const rollnumber = document.getElementById('rollnumber').value;
-                const password = document.getElementById('password').value;
-
-                if (!rollnumber || !password) {
-                    alert('Please enter both Roll Number and Password');
-                    return;
-                }
-
-                // Show loading state
-                const submitBtn = this.querySelector('.login-btn');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Signing In...';
-                submitBtn.disabled = true;
-
-                try {
-                    // Step 1: Get user data by roll number
-                    const { data: userData, error: fetchError } = await supabase
-                        .from('users')
-                        .select('*')
-                        .eq('rollnumber', rollnumber)
-                        .single();
-
-                    if (fetchError || !userData) {
-                        throw new Error('Roll Number not found. Please check your roll number or register first.');
-                    }
-
-                    // Step 2: Check if email is verified
-                    if (!userData.email_verified || !userData.account_active) {
-                        throw new Error('Account not activated. Please verify your email first.');
-                    }
-
-                    // Step 3: Verify password hash
-                    const passwordValid = await verifyPassword(password, userData.password_hash);
-                    if (!passwordValid) {
-                        throw new Error('Invalid password. Please check your password and try again.');
-                    }
-
-                    // Step 4: Create custom session (no Supabase Auth sign-in needed for app usage)
-                    const userSession = {
-                        rollnumber: rollnumber,
-                        email: userData.email,
-                        first_name: userData.first_name,
-                        last_name: userData.last_name,
-                        department: userData.department,
-                        academic_year: userData.academic_year,
-                        login_time: new Date().toISOString()
-                    };
-        
-                    sessionStorage.setItem('userSession', JSON.stringify(userSession));
-
-                    // Step 5: Update last login time
-                    await supabase
-                        .from('users')
-                        .update({ last_login: new Date().toISOString() })
-                        .eq('rollnumber', rollnumber);
-
-                    alert('Login successful!');
-                    showScreen('dashboardScreen');
-        
-                } catch (error) {
-                    console.error('Login error:', error);
-                    alert('Login failed: ' + error.message);
-                } finally {
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                }
-            });
-
-            // EMAIL VERIFICATION HANDLER (Modified from your existing code)
-            document.addEventListener('DOMContentLoaded', async function() {
-                const urlParams = new URLSearchParams(window.location.hash.substring(1));
-                const searchParams = new URLSearchParams(window.location.search);
-
-                const type = urlParams.get('type') || searchParams.get('type');
-                const accessToken = urlParams.get('access_token') || searchParams.get('access_token');
-                const refreshToken = urlParams.get('refresh_token') || searchParams.get('refresh_token');
-
-                if (type === 'signup' && accessToken && refreshToken) {
-                    try {
-                        const { data, error } = await supabase.auth.setSession({
-                            access_token: accessToken,
-                            refresh_token: refreshToken
-                        });
-
-                        if (error) throw error;
-
-                        if (data.user) {
-                            // Update user's verification status in your users table
-                            const { error: updateError } = await supabase
-                                .from('users')
-                                .update({ 
-                                    email_verified: true,
-                                    account_active: true // Activate account for roll number login
-                                })
-                                .eq('email', data.user.email);
-    
-                            if (updateError) {
-                                console.error('Error updating verification status:', updateError);
-                            } else {
-                                alert('Email verified successfully! You can now log in with your roll number and password.');
-                            }
-                        }
-
-                        // Sign out from Supabase Auth (we don't need it for app usage)
-                        await supabase.auth.signOut();
             
-                        // Clean up the URL
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        showLogin();
-                    } catch (error) {
-                        console.error('Email verification error:', error);
-                        alert('Email verification failed. Please try again or contact support.');
-                    }
-                }
-            });
-
-            // PASSWORD HASHING FUNCTIONS
-            async function hashPassword(password) {
-                // Simple hash function - in production, use a proper library like bcrypt
-                const encoder = new TextEncoder();
-                const data = encoder.encode(password + 'your_salt_string_here');
-                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            }
-
-            async function verifyPassword(password, hash) {
-                const passwordHash = await hashPassword(password);
-                return passwordHash === hash;
-            }
-
-            // UTILITY FUNCTIONS
-            function getCurrentUser() {
-                const userSession = sessionStorage.getItem('userSession');
-                return userSession ? JSON.parse(userSession) : null;
-            }
-
-            function isUserLoggedIn() {
-                return getCurrentUser() !== null;
-            }
-
-            function logout() {
-                sessionStorage.removeItem('userSession');
-                showLogin();
-                alert('Logged out successfully!');
-            }
-
-            // SESSION CHECK FUNCTION (call this on page load for protected pages)
-            function requireLogin() {
-                if (!isUserLoggedIn()) {
-                    alert('Please log in to access this page.');
-                    showLogin();
-                    return false;
-                }
-                return true;
-            }
-
             // Dashboard functionality
             function switchTab(tabName) {
                 // Remove active class from all tabs and contents
