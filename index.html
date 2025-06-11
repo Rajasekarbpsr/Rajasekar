@@ -1498,110 +1498,104 @@
                 showScreen('loginScreen');
             }
 
-            // REGISTRATION FUNCTION
-            document.addEventListener('DOMContentLoaded', function() {
-                const registrationForm = document.getElementById('registrationForm');
-                if (registrationForm) {
-                    registrationForm.addEventListener('submit', async function(e) {
-                        e.preventDefault();
-    
-                        const formData = new FormData(this);
-                        const password = formData.get('password');
-                        const confirmPassword = formData.get('confirmPassword');
-                        const rollnumber = formData.get('rollnumber');
-                        const email = formData.get('email');
-    
-                        // Validate password match
-                        if (password !== confirmPassword) {
-                            alert('Passwords do not match!');
-                            return;
-                        }
-    
-                        // Validate password strength
-                        if (password.length < 6) {
-                            alert('Password must be at least 6 characters long!');
-                            return;
-                        }
-    
-                        // Validate email format
-                        if (!email.includes('@sece.ac.in')) {
-                            alert('Please enter a valid college email address!');
-                            return;
-                        }
+            // Replace the registration function with this
+            document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const password = formData.get('password');
+                const confirmPassword = formData.get('confirmPassword');
+                const rollnumber = formData.get('rollnumber');
+                const email = formData.get('email');
 
-                        // Show loading state
-                        const submitBtn = this.querySelector('.login-btn');
-                        const originalText = submitBtn.textContent;
-                        submitBtn.textContent = 'Creating Account...';
-                        submitBtn.disabled = true;
+                // Validate password match
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match!');
+                    return;
+                }
 
-                        try {
-                            // Check if roll number already exists
-                            const { data: existingUser } = await supabase
-                                .from('users')
-                                .select('rollnumber')
-                                .eq('rollnumber', rollnumber)
-                                .single();
+                // Validate password strength
+                if (password.length < 6) {
+                    alert('Password must be at least 6 characters long!');
+                    return;
+                }
 
-                            if (existingUser) {
-                                throw new Error('Roll number already registered.');
+                // Validate email format
+                if (!email.includes('@sece.ac.in')) {
+                    alert('Please enter a valid college email address!');
+                    return;
+                }
+            
+                // Show loading state
+                const submitBtn = this.querySelector('.login-btn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Creating Account...';
+                submitBtn.disabled = true;
+
+                try {
+                    // Check if roll number already exists
+                    const { data: existingRoll } = await supabase
+                        .from('users')
+                        .select('rollnumber')
+                        .eq('rollnumber', rollnumber)
+                        .single();
+
+                    if (existingRoll) {
+                        throw new Error('Roll number already registered.');
+                    }
+
+                    // Check if email already exists
+                    const { data: existingEmail } = await supabase
+                        .from('users')
+                        .select('email')
+                        .eq('email', email)
+                        .single();
+
+                    if (existingEmail) {
+                        throw new Error('Email already registered.');
+                    }
+
+                    // Create user with Supabase Auth
+                    const { data: authData, error: authError } = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                        options: {
+                            data: {
+                                rollnumber: rollnumber
                             }
-
-                            // Step 1: Create auth user with email (only for verification system)
-                            const { data: authData, error: authError } = await supabase.auth.signUp({
-                                email: email,
-                                password: 'temp_password_for_verification_' + rollnumber, // Temporary password
-                                options: {
-                                    data: {
-                                        rollnumber: rollnumber,
-                                        purpose: 'email_verification_only'
-                                    }
-                                }
-                            });
-
-                            if (authError) {
-                                throw authError;
-                            }
-
-                            // Step 2: Hash the actual password for roll number login
-                            const passwordHash = await hashPassword(password);
-
-                            // Step 3: Store user data with custom authentication
-                            const { error: dbError } = await supabase
-                                .from('users')
-                                .insert([
-                                    {
-                                        rollnumber: rollnumber,
-                                        email: email,
-                                        password_hash: passwordHash, // Store hashed password for roll number auth
-                                        auth_user_id: authData.user.id, // Only for email verification tracking
-                                        first_name: formData.get('firstName'),
-                                        last_name: formData.get('lastName'),
-                                        department: formData.get('department'),
-                                        academic_year: formData.get('year'),
-                                        email_verified: false,
-                                        account_active: false, // Activated only after email verification
-                                        created_at: new Date().toISOString()
-                                    }
-                                ]);
-                    
-                            if (dbError) {
-                                console.error('Database error:', dbError);
-                                throw new Error('Registration failed. Please try again.');
-                            }
-
-                            alert('Registration successful! Please check your email to verify your account. After verification, you can login with your roll number and password.');
-                            this.reset();
-                            showLogin();
-
-                        } catch (error) {
-                            console.error('Registration error:', error);
-                            alert('Registration failed: ' + error.message);
-                        } finally {
-                            submitBtn.textContent = originalText;
-                            submitBtn.disabled = false;
                         }
                     });
+
+                    if (authError) throw authError;
+
+                    // Store additional user data in your users table
+                    const { error: dbError } = await supabase
+                        .from('users')
+                        .insert([
+                            {
+                                rollnumber: rollnumber,
+                                email: email,
+                                auth_user_id: authData.user.id,
+                                first_name: formData.get('firstName'),
+                                last_name: formData.get('lastName'),
+                                department: formData.get('department'),
+                                academic_year: formData.get('year'),
+                                email_verified: false,
+                                created_at: new Date().toISOString()
+                            }
+                        ]);
+
+                    if (dbError) throw dbError;
+
+                    alert('Registration successful! Please check your email to verify your account.');
+                    this.reset();
+                    showLogin();
+
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    alert('Registration failed: ' + error.message);
+                } finally {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
                 }
             });
 
