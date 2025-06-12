@@ -1062,6 +1062,54 @@
             </div>
         </div>
 
+        <!-- Password Reset Screen -->
+        <div id="resetPasswordScreen" class="screen">
+            <div class="login-container">
+                <div style="width: 500px; height: 370px; overflow: hidden; border-radius: 10px;">
+                    <dotlottie-player src="https://lottie.host/7f38ba96-d636-4730-afe4-d4d82e6ddaa9/PuNTgZwZaR.lottie" 
+                    background="transparent" 
+                    speed="1" 
+                    style="width: 400px; height: 400px" 
+                    loop 
+                    autoplay>
+                    </dotlottie-player>
+                </div>
+        
+                <div class="login-card">
+                    <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                        <img src="https://ik.imagekit.io/ycoh0ng50s/Logos/Logo%20-%20Sece.png?updatedAt=1749314791750" alt="College Logo" style="height: 60px; margin-right: 15px;">
+                        <div class="logo">Reset Password</div>
+                    </div>
+                    <p class="tagline">Create a new password for your account</p>
+                                                                  
+                    <form id="resetPasswordForm">
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required>
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPassword', this)">👁️</button>
+                            </div>
+                        </div>
+        
+                        <div class="form-group">
+                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="confirmNewPassword" name="confirmNewPassword" placeholder="Confirm new password" required>
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmNewPassword', this)">👁️</button>
+                            </div>
+                            <div id="newPasswordMatchMessage" style="font-size: 12px; margin-top: 5px;"></div>
+                        </div>
+        
+                        <button type="submit" class="login-btn">Update Password</button>
+                        <div class="auth-switch">
+                            <p>Remember your password?</p>
+                            <a href="#" class="switch-link" onclick="showLogin()">Back to Login</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Registration Screen -->
         <div id="registrationScreen" class="screen">
             <div class="register-container">
@@ -1588,6 +1636,9 @@
                         // Add these new function calls
                         setupEmailValidation();
                         setupPasswordValidation();
+                        setupResetPasswordForm();
+                        setupResetPasswordValidation();
+                        checkForPasswordReset();
             
                         // Show loading state
                         const submitBtn = this.querySelector('.login-btn');
@@ -1847,6 +1898,133 @@
                     passwordInput.addEventListener('input', checkPasswordMatch);
                     confirmInput.addEventListener('input', checkPasswordMatch);
                 }
+            }
+
+            // Enhanced forgot password function with redirect
+            async function showForgotPassword() {
+                const email = prompt('Enter your college email address to reset password:');
+                if (!email) return;
+                
+                if (!email.includes('@sece.ac.in')) {
+                    alert('Please enter a valid college email address (@sece.ac.in)');
+                    return;
+                }
+                
+                try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.origin + '?reset=true'
+                    });
+                    
+                    if (error) throw error;
+                    
+                    alert('Password reset email sent! Please check your inbox and click the reset link.');
+                } catch (error) {
+                    console.error('Reset password error:', error);
+                    alert('Failed to send reset email: ' + error.message);
+                }
+            }
+            
+            // Handle password reset form
+            function setupResetPasswordForm() {
+                const resetForm = document.getElementById('resetPasswordForm');
+                if (resetForm) {
+                    resetForm.addEventListener('submit', async function(e) {
+                        e.preventDefault();
+                        
+                        const newPassword = document.getElementById('newPassword').value;
+                        const confirmPassword = document.getElementById('confirmNewPassword').value;
+                        
+                        if (newPassword !== confirmPassword) {
+                            alert('Passwords do not match!');
+                            return;
+                        }
+                        
+                        if (newPassword.length < 6) {
+                            alert('Password must be at least 6 characters long!');
+                            return;
+                        }
+                        
+                        const submitBtn = this.querySelector('.login-btn');
+                        submitBtn.textContent = 'Updating Password...';
+                        submitBtn.disabled = true;
+                        
+                        try {
+                            const { error } = await supabase.auth.updateUser({
+                                password: newPassword
+                            });
+                            
+                            if (error) throw error;
+                            
+                            alert('Password updated successfully! Please login with your new password.');
+                            showLogin();
+                            
+                        } catch (error) {
+                            console.error('Password update error:', error);
+                            alert('Failed to update password: ' + error.message);
+                        } finally {
+                            submitBtn.textContent = 'Update Password';
+                            submitBtn.disabled = false;
+                        }
+                    });
+                }
+            }
+            
+            // Setup password matching for reset form
+            function setupResetPasswordValidation() {
+                const passwordInput = document.getElementById('newPassword');
+                const confirmInput = document.getElementById('confirmNewPassword');
+                const messageDiv = document.getElementById('newPasswordMatchMessage');
+                
+                function checkPasswordMatch() {
+                    const password = passwordInput ? passwordInput.value : '';
+                    const confirmPassword = confirmInput ? confirmInput.value : '';
+                    
+                    if (confirmPassword.length > 0) {
+                        if (password !== confirmPassword) {
+                            messageDiv.textContent = '❌ Passwords do not match';
+                            messageDiv.style.color = '#ff4757';
+                        } else {
+                            messageDiv.textContent = '✅ Passwords match';
+                            messageDiv.style.color = '#2ed573';
+                        }
+                    } else {
+                        messageDiv.textContent = '';
+                    }
+                }
+                
+                if (passwordInput && confirmInput && messageDiv) {
+                    passwordInput.addEventListener('input', checkPasswordMatch);
+                    confirmInput.addEventListener('input', checkPasswordMatch);
+                }
+            }
+            
+            // Check if user came from password reset email
+            function checkForPasswordReset() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const resetParam = urlParams.get('reset');
+                
+                if (resetParam === 'true') {
+                    // Check if user has a valid session from the reset email
+                    supabase.auth.getSession().then(({ data: { session } }) => {
+                        if (session) {
+                            showScreen('resetPasswordScreen');
+                        } else {
+                            alert('Invalid or expired reset link. Please request a new password reset.');
+                            showLogin();
+                        }
+                    });
+                }
+            }
+            
+            // Add this to your existing showScreen function or create it if it doesn't exist
+            function showScreen(screenId) {
+                // Hide all screens
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                
+                // Show the requested screen
+                document.getElementById(screenId).classList.add('active');
             }
 
             // Dashboard functionality
