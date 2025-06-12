@@ -1506,13 +1506,13 @@
                     .join('');
             }
             
-            // REGISTRATION FUNCTION
+            // FIXED REGISTRATION FUNCTION
             document.addEventListener('DOMContentLoaded', function() {
                 const registrationForm = document.getElementById('registrationForm');
                 if (registrationForm) {
                     registrationForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
-            
+
                         const formData = new FormData(this);
                         const password = formData.get('password');
                         const confirmPassword = formData.get('confirmPassword');
@@ -1542,25 +1542,37 @@
                         const originalText = submitBtn.textContent;
                         submitBtn.textContent = 'Creating Account...';
                         submitBtn.disabled = true;
-
+            
                         try {
-                            // Check if roll number already exists
-                            const { data: existingUser } = await supabase
+                            // FIXED: Check if roll number already exists with proper error handling
+                            const { data: existingUser, error: rollCheckError } = await supabase
                                 .from('users')
                                 .select('rollnumber')
                                 .eq('rollnumber', rollnumber)
-                                .single();
+                                .maybeSingle(); // Use maybeSingle() instead of single()
+
+                            // Handle potential errors from the query itself
+                            if (rollCheckError && rollCheckError.code !== 'PGRST116') {
+                                console.error('Roll number check error:', rollCheckError);
+                                throw new Error('Database connection error. Please try again.');
+                            }
 
                             if (existingUser) {
                                 throw new Error('Roll number already registered.');
                             }
 
-                            // Check if email already exists
-                            const { data: existingEmail } = await supabase
+                            // FIXED: Check if email already exists with proper error handling
+                            const { data: existingEmail, error: emailCheckError } = await supabase
                                 .from('users')
                                 .select('email')
                                 .eq('email', email)
-                                .single();
+                                .maybeSingle(); // Use maybeSingle() instead of single()
+
+                            // Handle potential errors from the query itself
+                            if (emailCheckError && emailCheckError.code !== 'PGRST116') {
+                                console.error('Email check error:', emailCheckError);
+                                throw new Error('Database connection error. Please try again.');
+                            }
 
                             if (existingEmail) {
                                 throw new Error('Email already registered.');
@@ -1580,11 +1592,17 @@
                             });
 
                             if (authError) {
-                                throw authError;
+                                console.error('Auth error:', authError);
+                                throw new Error(`Authentication error: ${authError.message}`);
                             }
 
-                            // Store user data in your custom table
-                            const { error: dbError } = await supabase
+                            // FIXED: Check if auth user was created successfully
+                            if (!authData?.user?.id) {
+                                throw new Error('Failed to create user account. Please try again.');
+                            }
+
+                            // FIXED: Store user data in your custom table with better error handling
+                            const { data: insertData, error: dbError } = await supabase
                                 .from('users')
                                 .insert([
                                     {
@@ -1596,11 +1614,34 @@
                                         department: formData.get('department'),
                                         academic_year: formData.get('year')
                                     }
-                                ]);
-        
+                                ])
+                                .select(); // Add select() to get the inserted data
+
                             if (dbError) {
-                                console.error('Database error:', dbError);
-                                throw new Error('Registration failed. Please try again.');
+                                console.error('Database error details:', dbError);
+                    
+                                // FIXED: Clean up auth user if database insertion fails
+                                try {
+                                    await supabase.auth.admin.deleteUser(authData.user.id);
+                                } catch (cleanupError) {
+                                    console.error('Cleanup error:', cleanupError);
+                                }
+                    
+                                // Provide more specific error messages
+                                if (dbError.code === '23505') { // Unique constraint violation
+                                    if (dbError.message.includes('rollnumber')) {
+                                        throw new Error('Roll number already exists.');
+                                    } else if (dbError.message.includes('email')) {
+                                        throw new Error('Email already exists.');
+                                    }
+                                }
+                    
+                                throw new Error(`Database error: ${dbError.message}`);
+                            }
+
+                            // FIXED: Check if insertion was successful
+                            if (!insertData || insertData.length === 0) {
+                                throw new Error('Failed to save user data. Please try again.');
                             }
 
                             alert('Registration successful! Please check your email to verify your account before logging in.');
@@ -1609,7 +1650,20 @@
 
                         } catch (error) {
                             console.error('Registration error:', error);
-                            alert('Registration failed: ' + error.message);
+                
+                            // FIXED: Provide more user-friendly error messages
+                            let errorMessage = 'Registration failed: ';
+                            if (error.message.includes('already registered') || error.message.includes('already exists')) {
+                                errorMessage += error.message;
+                            } else if (error.message.includes('Database connection error')) {
+                                errorMessage += 'Unable to connect to database. Please check your internet connection and try again.';
+                            } else if (error.message.includes('Authentication error')) {
+                                errorMessage += error.message;
+                            } else {
+                                errorMessage += error.message || 'Please try again.';
+                            }
+                
+                            alert(errorMessage);
                         } finally {
                             submitBtn.textContent = originalText;
                             submitBtn.disabled = false;
