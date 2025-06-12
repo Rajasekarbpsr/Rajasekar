@@ -1607,6 +1607,12 @@
             // FIXED REGISTRATION CODE - SIMPLIFIED APPROACH
             document.addEventListener('DOMContentLoaded', function() {
                 const registrationForm = document.getElementById('registrationForm');
+                // Add these new function calls
+                setupEmailValidation();
+                setupPasswordValidation();
+                setupResetPasswordForm();
+                setupResetPasswordValidation();
+                checkForPasswordReset();
                 if (registrationForm) {
                     registrationForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
@@ -1632,14 +1638,7 @@
                             alert('Please enter a valid college email address!');
                             return;
                         }
-
-                        // Add these new function calls
-                        setupEmailValidation();
-                        setupPasswordValidation();
-                        setupResetPasswordForm();
-                        setupResetPasswordValidation();
-                        checkForPasswordReset();
-            
+                                   
                         // Show loading state
                         const submitBtn = this.querySelector('.login-btn');
                         const originalText = submitBtn.textContent;
@@ -1708,6 +1707,12 @@
             // FIXED LOGIN FUNCTION - WITH BETTER ERROR HANDLING
             document.addEventListener('DOMContentLoaded', function() {
                 const loginForm = document.getElementById('loginForm');
+                // Add these new function calls
+                setupEmailValidation();
+                setupPasswordValidation();
+                setupResetPasswordForm();
+                setupResetPasswordValidation();
+                checkForPasswordReset();
                 if (loginForm) {
                     loginForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
@@ -1718,7 +1723,7 @@
                         if (!email || !password) {
                             alert('Please enter both Email and Password');
                             return;
-                        }
+                        }                        
             
                         // Validate email format
                         if (!email.includes('@sece.ac.in')) {
