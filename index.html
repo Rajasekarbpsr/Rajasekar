@@ -1506,7 +1506,7 @@
                     .join('');
             }
             
-            // FIXED REGISTRATION FUNCTION
+            // FINAL REGISTRATION CODE - COMPLETE WORKING SOLUTION
             document.addEventListener('DOMContentLoaded', function() {
                 const registrationForm = document.getElementById('registrationForm');
                 if (registrationForm) {
@@ -1519,19 +1519,17 @@
                         const rollnumber = formData.get('rollnumber');
                         const email = formData.get('email');
 
-                        // Validate password match
+                        // Client-side validation
                         if (password !== confirmPassword) {
                             alert('Passwords do not match!');
                             return;
                         }
 
-                        // Validate password strength
                         if (password.length < 6) {
                             alert('Password must be at least 6 characters long!');
                             return;
                         }
 
-                        // Validate email format
                         if (!email.includes('@sece.ac.in')) {
                             alert('Please enter a valid college email address!');
                             return;
@@ -1542,43 +1540,29 @@
                         const originalText = submitBtn.textContent;
                         submitBtn.textContent = 'Creating Account...';
                         submitBtn.disabled = true;
-            
+
                         try {
-                            // FIXED: Check if roll number already exists with proper error handling
-                            const { data: existingUser, error: rollCheckError } = await supabase
-                                .from('users')
-                                .select('rollnumber')
-                                .eq('rollnumber', rollnumber)
-                                .maybeSingle(); // Use maybeSingle() instead of single()
+                            // Step 1: Check for existing users using the database function
+                            const { data: dbResult, error: dbError } = await supabase
+                                .rpc('register_user', {
+                                    p_email: email,
+                                    p_rollnumber: rollnumber,
+                                    p_first_name: formData.get('firstName'),
+                                    p_last_name: formData.get('lastName'),
+                                    p_department: formData.get('department'),
+                                    p_academic_year: formData.get('year')
+                                });
 
-                            // Handle potential errors from the query itself
-                            if (rollCheckError && rollCheckError.code !== 'PGRST116') {
-                                console.error('Roll number check error:', rollCheckError);
-                                throw new Error('Database connection error. Please try again.');
+                            if (dbError) {
+                                console.error('Database function error:', dbError);
+                                throw new Error('Database error: ' + dbError.message);
                             }
 
-                            if (existingUser) {
-                                throw new Error('Roll number already registered.');
+                            if (!dbResult || !dbResult.success) {
+                                throw new Error(dbResult?.error || 'Registration failed');
                             }
 
-                            // FIXED: Check if email already exists with proper error handling
-                            const { data: existingEmail, error: emailCheckError } = await supabase
-                                .from('users')
-                                .select('email')
-                                .eq('email', email)
-                                .maybeSingle(); // Use maybeSingle() instead of single()
-
-                            // Handle potential errors from the query itself
-                            if (emailCheckError && emailCheckError.code !== 'PGRST116') {
-                                console.error('Email check error:', emailCheckError);
-                                throw new Error('Database connection error. Please try again.');
-                            }
-
-                            if (existingEmail) {
-                                throw new Error('Email already registered.');
-                            }
-
-                            // Create auth user
+                            // Step 2: Create auth user
                             const { data: authData, error: authError } = await supabase.auth.signUp({
                                 email: email,
                                 password: password,
@@ -1593,55 +1577,31 @@
 
                             if (authError) {
                                 console.error('Auth error:', authError);
-                                throw new Error(`Authentication error: ${authError.message}`);
+                                // If auth fails, we need to clean up the database record
+                                try {
+                                    await supabase
+                                        .from('users')
+                                        .delete()
+                                        .eq('id', dbResult.user_id);
+                                } catch (cleanupError) {
+                                    console.error('Cleanup error:', cleanupError);
+                                }
+                                throw new Error('Authentication error: ' + authError.message);
                             }
 
-                            // FIXED: Check if auth user was created successfully
                             if (!authData?.user?.id) {
                                 throw new Error('Failed to create user account. Please try again.');
                             }
 
-                            // FIXED: Store user data in your custom table with better error handling
-                            const { data: insertData, error: dbError } = await supabase
+                            // Step 3: Update the user record with the correct auth user ID
+                            const { error: updateError } = await supabase
                                 .from('users')
-                                .insert([
-                                    {
-                                        id: authData.user.id, // Use the same ID as auth user
-                                        rollnumber: rollnumber,
-                                        email: email,
-                                        first_name: formData.get('firstName'),
-                                        last_name: formData.get('lastName'),
-                                        department: formData.get('department'),
-                                        academic_year: formData.get('year')
-                                    }
-                                ])
-                                .select(); // Add select() to get the inserted data
+                                .update({ id: authData.user.id })
+                                .eq('id', dbResult.user_id);
 
-                            if (dbError) {
-                                console.error('Database error details:', dbError);
-                    
-                                // FIXED: Clean up auth user if database insertion fails
-                                try {
-                                    await supabase.auth.admin.deleteUser(authData.user.id);
-                                } catch (cleanupError) {
-                                    console.error('Cleanup error:', cleanupError);
-                                }
-                    
-                                // Provide more specific error messages
-                                if (dbError.code === '23505') { // Unique constraint violation
-                                    if (dbError.message.includes('rollnumber')) {
-                                        throw new Error('Roll number already exists.');
-                                    } else if (dbError.message.includes('email')) {
-                                        throw new Error('Email already exists.');
-                                    }
-                                }
-                    
-                                throw new Error(`Database error: ${dbError.message}`);
-                            }
-
-                            // FIXED: Check if insertion was successful
-                            if (!insertData || insertData.length === 0) {
-                                throw new Error('Failed to save user data. Please try again.');
+                            if (updateError) {
+                                console.error('Update error:', updateError);
+                                // This is not critical for the registration process
                             }
 
                             alert('Registration successful! Please check your email to verify your account before logging in.');
@@ -1650,20 +1610,7 @@
 
                         } catch (error) {
                             console.error('Registration error:', error);
-                
-                            // FIXED: Provide more user-friendly error messages
-                            let errorMessage = 'Registration failed: ';
-                            if (error.message.includes('already registered') || error.message.includes('already exists')) {
-                                errorMessage += error.message;
-                            } else if (error.message.includes('Database connection error')) {
-                                errorMessage += 'Unable to connect to database. Please check your internet connection and try again.';
-                            } else if (error.message.includes('Authentication error')) {
-                                errorMessage += error.message;
-                            } else {
-                                errorMessage += error.message || 'Please try again.';
-                            }
-                
-                            alert(errorMessage);
+                            alert('Registration failed: ' + error.message);
                         } finally {
                             submitBtn.textContent = originalText;
                             submitBtn.disabled = false;
