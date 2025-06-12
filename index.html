@@ -1506,63 +1506,43 @@
                     .join('');
             }
             
-            // FINAL REGISTRATION CODE - COMPLETE WORKING SOLUTION
+            // FIXED REGISTRATION CODE - SIMPLIFIED APPROACH
             document.addEventListener('DOMContentLoaded', function() {
                 const registrationForm = document.getElementById('registrationForm');
                 if (registrationForm) {
                     registrationForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
-
+            
                         const formData = new FormData(this);
                         const password = formData.get('password');
                         const confirmPassword = formData.get('confirmPassword');
                         const rollnumber = formData.get('rollnumber');
                         const email = formData.get('email');
-
+            
                         // Client-side validation
                         if (password !== confirmPassword) {
                             alert('Passwords do not match!');
                             return;
                         }
-
+            
                         if (password.length < 6) {
                             alert('Password must be at least 6 characters long!');
                             return;
                         }
-
+            
                         if (!email.includes('@sece.ac.in')) {
                             alert('Please enter a valid college email address!');
                             return;
                         }
-
+            
                         // Show loading state
                         const submitBtn = this.querySelector('.login-btn');
                         const originalText = submitBtn.textContent;
                         submitBtn.textContent = 'Creating Account...';
                         submitBtn.disabled = true;
-
+            
                         try {
-                            // Step 1: Check for existing users using the database function
-                            const { data: dbResult, error: dbError } = await supabase
-                                .rpc('register_user', {
-                                    p_email: email,
-                                    p_rollnumber: rollnumber,
-                                    p_first_name: formData.get('firstName'),
-                                    p_last_name: formData.get('lastName'),
-                                    p_department: formData.get('department'),
-                                    p_academic_year: formData.get('year')
-                                });
-
-                            if (dbError) {
-                                console.error('Database function error:', dbError);
-                                throw new Error('Database error: ' + dbError.message);
-                            }
-
-                            if (!dbResult || !dbResult.success) {
-                                throw new Error(dbResult?.error || 'Registration failed');
-                            }
-
-                            // Step 2: Create auth user
+                            // Step 1: Create auth user first
                             const { data: authData, error: authError } = await supabase.auth.signUp({
                                 email: email,
                                 password: password,
@@ -1574,40 +1554,41 @@
                                     }
                                 }
                             });
-
+            
                             if (authError) {
                                 console.error('Auth error:', authError);
-                                // If auth fails, we need to clean up the database record
-                                try {
-                                    await supabase
-                                        .from('users')
-                                        .delete()
-                                        .eq('id', dbResult.user_id);
-                                } catch (cleanupError) {
-                                    console.error('Cleanup error:', cleanupError);
-                                }
                                 throw new Error('Authentication error: ' + authError.message);
                             }
-
+            
                             if (!authData?.user?.id) {
                                 throw new Error('Failed to create user account. Please try again.');
                             }
-
-                            // Step 3: Update the user record with the correct auth user ID
-                            const { error: updateError } = await supabase
-                                .from('users')
-                                .update({ id: authData.user.id })
-                                .eq('id', dbResult.user_id);
-
-                            if (updateError) {
-                                console.error('Update error:', updateError);
-                                // This is not critical for the registration process
+            
+                            // Step 2: Create user profile in database
+                            const { data: dbResult, error: dbError } = await supabase
+                                .rpc('create_user_profile', {
+                                    p_auth_user_id: authData.user.id,
+                                    p_email: email,
+                                    p_rollnumber: rollnumber,
+                                    p_first_name: formData.get('firstName'),
+                                    p_last_name: formData.get('lastName'),
+                                    p_department: formData.get('department'),
+                                    p_academic_year: formData.get('year')
+                                });
+            
+                            if (dbError) {
+                                console.error('Database function error:', dbError);
+                                throw new Error('Database error: ' + dbError.message);
                             }
-
+            
+                            if (!dbResult || !dbResult.success) {
+                                throw new Error(dbResult?.error || 'Failed to create user profile');
+                            }
+            
                             alert('Registration successful! Please check your email to verify your account before logging in.');
                             this.reset();
                             showLogin();
-
+            
                         } catch (error) {
                             console.error('Registration error:', error);
                             alert('Registration failed: ' + error.message);
@@ -1618,8 +1599,8 @@
                     });
                 }
             });
-
-            // LOGIN FUNCTION
+            
+            // FIXED LOGIN FUNCTION - WITH BETTER ERROR HANDLING
             document.addEventListener('DOMContentLoaded', function() {
                 const loginForm = document.getElementById('loginForm');
                 if (loginForm) {
@@ -1628,43 +1609,58 @@
             
                         const email = document.getElementById('email').value;
                         const password = document.getElementById('password').value;
-
+            
                         if (!email || !password) {
                             alert('Please enter both Email and Password');
                             return;
                         }
-
+            
                         // Validate email format
                         if (!email.includes('@sece.ac.in')) {
                             alert('Please use your college email address (@sece.ac.in)');
                             return;
                         }
-
+            
                         // Show loading state
                         const submitBtn = this.querySelector('.login-btn');
                         const originalText = submitBtn.textContent;
                         submitBtn.textContent = 'Signing In...';
                         submitBtn.disabled = true;
-
+            
                         try {
                             // Sign in with Supabase Auth
                             const { data, error } = await supabase.auth.signInWithPassword({
                                 email: email,
                                 password: password
                             });
-
+            
                             if (error) {
                                 throw error;
                             }
-
+            
+                            // Check if email is confirmed
+                            if (!data.user.email_confirmed_at) {
+                                throw new Error('Please verify your email first. Check your inbox for the verification link.');
+                            }
+            
                             // Get additional user data from your users table
                             const { data: userData, error: userError } = await supabase
                                 .from('users')
                                 .select('*')
-                                .eq('email', email)
+                                .eq('id', data.user.id) // Use auth user ID instead of email
                                 .single();
-
-                            if (userError || !userData) {
+            
+                            if (userError) {
+                                console.error('User data error:', userError);
+                                
+                                // If user doesn't exist in our users table, try to create profile
+                                if (userError.code === 'PGRST116') { // No rows found
+                                    throw new Error('User profile not found. Please contact support or try registering again.');
+                                }
+                                throw new Error('Failed to retrieve user data: ' + userError.message);
+                            }
+            
+                            if (!userData) {
                                 throw new Error('User data not found. Please contact support.');
                             }
             
@@ -1679,27 +1675,29 @@
                                 academic_year: userData.academic_year,
                                 login_time: new Date().toISOString()
                             };
-
+            
                             // Store session (using a simple variable instead of sessionStorage for this example)
                             window.currentUserSession = userSession;
-
+            
                             alert('Login successful!');
                             showScreen('dashboardScreen');
                             updateDashboardUserInfo(userSession);
-
+            
                         } catch (error) {
                             console.error('Login error:', error);
-    
+            
                             // User-friendly error messages
                             let errorMessage = 'Login failed. ';
                             if (error.message.includes('Invalid login credentials')) {
                                 errorMessage += 'Invalid email or password.';
-                            } else if (error.message.includes('Email not confirmed')) {
+                            } else if (error.message.includes('Email not confirmed') || error.message.includes('verify your email')) {
                                 errorMessage += 'Please verify your email first. Check your inbox for the verification link.';
+                            } else if (error.message.includes('User profile not found')) {
+                                errorMessage += 'Your account setup is incomplete. Please contact support.';
                             } else {
                                 errorMessage += error.message;
                             }
-    
+            
                             alert(errorMessage);
                         } finally {
                             submitBtn.textContent = originalText;
