@@ -1789,7 +1789,6 @@
                             // Store session (using a simple variable instead of sessionStorage for this example)
                             window.currentUserSession = userSession;
             
-                            alert('Login successful!');
                             showScreen('dashboardScreen');
                             updateDashboardUserInfo(userSession);
             
@@ -1828,31 +1827,7 @@
                     button.textContent = '👁️';
                 }
             }
-            
-            // Forgot password function
-            async function showForgotPassword() {
-                const email = prompt('Enter your college email address to reset password:');
-                if (!email) return;
-                
-                if (!email.includes('@sece.ac.in')) {
-                    alert('Please enter a valid college email address (@sece.ac.in)');
-                    return;
-                }
-                
-                try {
-                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                        redirectTo: window.location.origin + '/reset-password'
-                    });
-                    
-                    if (error) throw error;
-                    
-                    alert('Password reset email sent! Please check your inbox.');
-                } catch (error) {
-                    console.error('Reset password error:', error);
-                    alert('Failed to send reset email: ' + error.message);
-                }
-            }
-            
+                                   
             // Real-time email validation for registration
             function setupEmailValidation() {
                 const emailInput = document.getElementById('regEmail');
