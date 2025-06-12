@@ -1706,13 +1706,7 @@
             
             // FIXED LOGIN FUNCTION - WITH BETTER ERROR HANDLING
             document.addEventListener('DOMContentLoaded', function() {
-                const loginForm = document.getElementById('loginForm');
-                // Add these new function calls
-                setupEmailValidation();
-                setupPasswordValidation();
-                setupResetPasswordForm();
-                setupResetPasswordValidation();
-                checkForPasswordReset();
+                const loginForm = document.getElementById('loginForm');                
                 if (loginForm) {
                     loginForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
