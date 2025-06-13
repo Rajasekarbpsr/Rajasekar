@@ -2080,7 +2080,7 @@
                 }
             });
             
-            // FIXED LOGIN FUNCTION - WITH BETTER ERROR HANDLING
+            // FIXED LOGIN FUNCTION - WITH BETTER ERROR HANDLING AND DASHBOARD COMPATIBILITY
             document.addEventListener('DOMContentLoaded', function() {
                 const loginForm = document.getElementById('loginForm');                
                 if (loginForm) {
@@ -2185,7 +2185,7 @@
                     });
                 }
             });
-
+            
             // Password visibility toggle function
             function togglePasswordVisibility(inputId, button) {
                 const input = document.getElementById(inputId);
@@ -2197,7 +2197,7 @@
                     button.textContent = '👁️';
                 }
             }
-                                   
+                                           
             // Real-time email validation for registration
             function setupEmailValidation() {
                 const emailInput = document.getElementById('regEmail');
@@ -2249,7 +2249,7 @@
                     confirmInput.addEventListener('input', checkPasswordMatch);
                 }
             }
-
+            
             // Enhanced forgot password function with redirect
             async function showForgotPassword() {
                 const email = prompt('Enter your college email address to reset password:');
@@ -2376,7 +2376,7 @@
                 // Show the requested screen
                 document.getElementById(screenId).classList.add('active');
             }
-
+            
             // Dashboard functionality
             function switchTab(tabName) {
                 // Remove active class from all tabs and contents
@@ -2387,53 +2387,94 @@
                 event.target.classList.add('active');
                 document.getElementById(tabName + 'Tab').classList.add('active');
             }
-
-            // Update dashboard with user information
-            function updateDashboardUserInfo(userData, rollnumber) {
-                // Update navbar
-                const userAvatar = document.querySelector('.user-avatar');
-                const userName = document.querySelector('.nav-user span');
-                const welcomeTitle = document.querySelector('.dashboard-title');
-    
-                const initials = (userData.first_name.charAt(0) + userData.last_name.charAt(0)).toUpperCase();
-                userAvatar.textContent = initials;
-                userName.textContent = userData.first_name + ' ' + userData.last_name;
-                welcomeTitle.textContent = `Welcome, ${userData.first_name}!`;
-    
-                // Update profile section
-                const infoValues = document.querySelectorAll('.info-value');
-                infoValues[0].textContent = userData.rollnumber; // Roll Number
-                infoValues[1].textContent = userData.department; // Department
-                infoValues[2].textContent = userData.academic_year; // Year
-                infoValues[3].textContent = userData.email; // Email
+            
+            // FIXED: Update dashboard with user information - with proper error handling
+            function updateDashboardUserInfo(userData) {
+                try {
+                    // Update navbar elements (only if they exist)
+                    const userAvatar = document.querySelector('.user-avatar');
+                    const userName = document.querySelector('.nav-user span');
+                    const welcomeTitle = document.querySelector('.dashboard-title');
+            
+                    if (userAvatar && userData.first_name && userData.last_name) {
+                        const initials = (userData.first_name.charAt(0) + userData.last_name.charAt(0)).toUpperCase();
+                        userAvatar.textContent = initials;
+                    }
+            
+                    if (userName && userData.first_name && userData.last_name) {
+                        userName.textContent = userData.first_name + ' ' + userData.last_name;
+                    }
+            
+                    if (welcomeTitle && userData.first_name) {
+                        welcomeTitle.textContent = `Welcome, ${userData.first_name}!`;
+                    }
+            
+                    // Update profile section (only if elements exist)
+                    const infoValues = document.querySelectorAll('.info-value');
+                    if (infoValues.length >= 4) {
+                        if (userData.rollnumber) infoValues[0].textContent = userData.rollnumber; // Roll Number
+                        if (userData.department) infoValues[1].textContent = userData.department; // Department
+                        if (userData.academic_year) infoValues[2].textContent = userData.academic_year; // Year
+                        if (userData.email) infoValues[3].textContent = userData.email; // Email
+                    }
+            
+                    // Alternative: Update any element with specific IDs if they exist in your new dashboard
+                    const elements = {
+                        'user-name': userData.first_name + ' ' + userData.last_name,
+                        'user-roll': userData.rollnumber,
+                        'user-department': userData.department,
+                        'user-year': userData.academic_year,
+                        'user-email': userData.email,
+                        'welcome-message': `Welcome, ${userData.first_name}!`
+                    };
+            
+                    Object.entries(elements).forEach(([id, value]) => {
+                        const element = document.getElementById(id);
+                        if (element && value) {
+                            element.textContent = value;
+                        }
+                    });
+            
+                    console.log('Dashboard updated successfully with user data:', userData);
+            
+                } catch (error) {
+                    console.error('Error updating dashboard UI:', error);
+                    // Don't show alert to user since login was successful
+                    // Just log the error for debugging
+                }
             }
-
+            
             async function logout() {
                 try {
                     const { error } = await supabase.auth.signOut();
                     if (error) {
                         console.error('Logout error:', error);
                     }
-        
+            
                     // Clear stored user data
-                    localStorage.removeItem('currentUser');
-        
+                    if (window.currentUserSession) {
+                        window.currentUserSession = null;
+                    }
+            
                     showScreen('loginScreen');
                     clearTestData();
                 } catch (error) {
                     console.error('Logout error:', error);
                     // Still proceed with logout even if there's an error
-                    localStorage.removeItem('currentUser');
+                    if (window.currentUserSession) {
+                        window.currentUserSession = null;
+                    }
                     showScreen('loginScreen');
                     clearTestData();
                 }
             }
-
+            
             function clearTestData() {
-                currentQuestion = 0;
-                selectedAnswers = {};
-                flaggedQuestions.clear();
-                if (timerInterval) {
+                // Only clear if these variables exist
+                if (typeof currentQuestion !== 'undefined') currentQuestion = 0;
+                if (typeof selectedAnswers !== 'undefined') selectedAnswers = {};
+                if (typeof flaggedQuestions !== 'undefined') flaggedQuestions.clear();
+                if (typeof timerInterval !== 'undefined' && timerInterval) {
                     clearInterval(timerInterval);
                 }
             }
